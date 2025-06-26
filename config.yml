@@ -4,7 +4,7 @@ app:
   entry: streamlink_cli.main
 git:
   repo: https://github.com/kumaraguru1735/streamlink-drm.git
-  ref: 1.0
+  ref: master
 builds:
   aarch64:
     image: ghcr.io/streamlink/appimage-buildenv-aarch64@sha256:49bed6fc0eec06f9f739bed9ed69b36fd655d1cae69b799dd6cd682d99092656
