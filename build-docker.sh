@@ -23,23 +23,23 @@ log "Setting up Python environment"
 log "Python: ${PYTHON}"
 log "Pip: ${PIP}"
 
-+# Ensure system libraries required for building lxml are available
-+# Depending on the base image (manylinux uses yum/dnf, but fallback to apt),
-+# install libxml2 and libxslt development headers which are required when
-+# lxml needs to be built from source (Python 3.13 wheels are not yet
-+# available).
-+if command -v yum >/dev/null 2>&1; then
-+  log "Installing libxml2/libxslt development packages via yum"
-+  yum install -y -q libxml2-devel libxslt-devel && yum clean all
-+elif command -v dnf >/dev/null 2>&1; then
-+  log "Installing libxml2/libxslt development packages via dnf"
-+  dnf install -y -q libxml2-devel libxslt-devel && dnf clean all
-+elif command -v apt-get >/dev/null 2>&1; then
-+  log "Installing libxml2/libxslt development packages via apt-get"
-+  apt-get update -qq && apt-get install -y -qq libxml2-dev libxslt1-dev && rm -rf /var/lib/apt/lists/*
-+else
-+  log "WARNING: Could not detect package manager to install libxml2/libxslt development headers. lxml build may fail."
-+fi
+# Ensure system libraries required for building lxml are available
+# Depending on the base image (manylinux uses yum/dnf, but fallback to apt),
+# install libxml2 and libxslt development headers which are required when
+# lxml needs to be built from source (Python 3.13 wheels are not yet
+# available).
+if command -v yum >/dev/null 2>&1; then
+  log "Installing libxml2/libxslt development packages via yum"
+  yum install -y -q libxml2-devel libxslt-devel && yum clean all
+elif command -v dnf >/dev/null 2>&1; then
+  log "Installing libxml2/libxslt development packages via dnf"
+  dnf install -y -q libxml2-devel libxslt-devel && dnf clean all
+elif command -v apt-get >/dev/null 2>&1; then
+  log "Installing libxml2/libxslt development packages via apt-get"
+  apt-get update -qq && apt-get install -y -qq libxml2-dev libxslt1-dev && rm -rf /var/lib/apt/lists/*
+else
+  log "WARNING: Could not detect package manager to install libxml2/libxslt development headers. lxml build may fail."
+fi
 
 # Update pip
 "${PIP}" install --disable-pip-version-check --no-cache-dir --upgrade pip
