@@ -78,7 +78,7 @@ builds:
       h11: 0.16.0 --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
       idna: 3.10 --hash=sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3
       isodate: 0.7.2 --hash=sha256:28009937d8031054830160fce6d409ed342816b543597cece116d966c6d99e15
-      lxml: 4.9.4 --hash=sha256:a2166b32a6b6dc0d5d88c4b7b8f41abc21c0b1a8a6b3c2ab6b59a12e0e4ce0b9
+      lxml: 5.4.0 --hash=sha256:6e84edecc3eb04c4f8a727c4e225dea29c1b5dd56aab669a7719a8a8db6f2a1b
       outcome: 1.3.0.post0 --hash=sha256:e771c5ce06d1415e356078d3bdd68523f284b4ce5419828922b6871e65eda82b
       pycountry: 24.6.1 --hash=sha256:f1a4fb391cd7214f8eefd39556d740adcc233c778a27f8942c8dca351d6ce06f
       pycryptodome: 3.23.0 --hash=sha256:c8987bd3307a39bc03df5c8e0e3d8be0c4c3518b7f044b0f4c15d1aa78f52575
