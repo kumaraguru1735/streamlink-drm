@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -U --upgrade-strategy=eager -r requirements.txt
+      - name: Make scripts executable
+        run: |
+          chmod +x build.sh build-docker.sh get-dependencies.sh deploy.sh
       - name: Build AppImage
         run: |
           SOURCE_DATE_EPOCH=$(git show -s --format=%ct) ./build.sh --arch=${{ matrix.arch }} --bundle=${{ matrix.bundle }}
@@ -62,6 +65,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
+      - name: Make deploy script executable
+        run: chmod +x deploy.sh
       - run: ./deploy.sh dist/**/*.AppImage
         env:
           RELEASES_API_KEY: ${{ secrets.GITHUB_TOKEN }}

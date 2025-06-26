@@ -3,8 +3,8 @@ app:
   rel: 1
   entry: streamlink_cli.main
 git:
-  repo: https://github.com/streamlink/streamlink.git
-  ref: master
+  repo: https://github.com/kumaraguru1735/streamlink-drm.git
+  ref: 1.0
 builds:
   aarch64:
     image: ghcr.io/streamlink/appimage-buildenv-aarch64@sha256:49bed6fc0eec06f9f739bed9ed69b36fd655d1cae69b799dd6cd682d99092656
@@ -25,12 +25,11 @@ builds:
           - from: BUILDINFO.txt
             to: usr/share/ffmpeg/buildinfo.txt
     dependency_override:
-      # https://github.com/urllib3/urllib3/blob/2.5.0/pyproject.toml#L44
-      - brotli>=1.0.9  # optional urllib3 dependency
-      - zstandard>=0.18.0  # optional urllib3 dependency on <=py314
+      - brotli>=1.0.9
+      - zstandard>=0.18.0
     dependencies:
       attrs: 25.3.0 --hash=sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3
-      Brotli: 1.1.0 --hash=sha256:3c0ef38c7a7014ffac1596ad581ac2e40e3bc3
+      Brotli: 1.1.0 --hash=sha256:3c0ef38c7a7014ffac1592d9fc0e19e2df0fa2e41c3c3745554761c5f6447eedabf
       certifi: 2025.6.15 --hash=sha256:2e0c7ce7cb5d8f8634ca55d2ba7e6ec2689a2fd6537d8dec1296a477a4910057
       charset-normalizer: 3.4.2 --hash=sha256:eba9904b0f38a143592d9fc0e19e2df0fa2e41c3c3745554761c5f6447eedabf
       h11: 0.16.0 --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
@@ -69,9 +68,8 @@ builds:
           - from: BUILDINFO.txt
             to: usr/share/ffmpeg/buildinfo.txt
     dependency_override:
-      # https://github.com/urllib3/urllib3/blob/2.5.0/pyproject.toml#L44
-      - brotli>=1.0.9  # optional urllib3 dependency
-      - zstandard>=0.18.0  # optional urllib3 dependency on <=py314
+      - brotli>=1.0.9
+      - zstandard>=0.18.0
     dependencies:
       attrs: 25.3.0 --hash=sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3
       Brotli: 1.1.0 --hash=sha256:a93dde851926f4f2678e704fadeb39e16c35d8baebd5252c9fd94ce8ce68c4a0
