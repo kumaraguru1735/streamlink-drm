@@ -74,6 +74,56 @@ def parse_html(
     return _parse(HTML, data, name, exception, schema, *args, **kwargs)
 
 
+def _clean_xml_content(data):
+    """
+    Clean XML content by removing extra content after the root closing tag.
+    This handles malformed XML that has comments or scripts after the main content.
+    """
+    if isinstance(data, bytes):
+        data_str = data.decode('utf-8', errors='ignore')
+        is_bytes = True
+    else:
+        data_str = data
+        is_bytes = False
+
+    # Look for common root tag endings that might have extra content after them
+    root_tags = ['</MPD>', '</playlist>', '</rss>', '</xml>', '</root>']
+
+    for tag in root_tags:
+        # Find the last occurrence of the closing tag (case insensitive)
+        pattern = re.escape(tag).replace('\\>', r'\s*>')
+        matches = list(re.finditer(pattern, data_str, re.IGNORECASE))
+
+        if matches:
+            # Get the last match and truncate everything after it
+            last_match = matches[-1]
+            cleaned_data = data_str[:last_match.end()]
+            return cleaned_data.encode('utf-8') if is_bytes else cleaned_data
+
+    # If no known root tags found, try to find any closing tag at the end and remove content after it
+    # This is a more aggressive approach for unknown XML structures
+    lines = data_str.split('\n')
+    cleaned_lines = []
+    found_closing_tag = False
+
+    for line in lines:
+        cleaned_lines.append(line)
+        # Look for any closing tag that might be the root
+        if re.search(r'<\/\w+\s*>$', line.strip()) and not found_closing_tag:
+            # Check if this looks like it could be a root closing tag
+            # (simple heuristic: it's not deeply indented)
+            if len(line) - len(line.lstrip()) <= 4:  # 4 or fewer leading spaces/tabs
+                found_closing_tag = True
+                break
+
+    if found_closing_tag and len(cleaned_lines) < len(lines):
+        cleaned_data = '\n'.join(cleaned_lines)
+        return cleaned_data.encode('utf-8') if is_bytes else cleaned_data
+
+    # If no cleaning was possible, return original data
+    return data
+
+
 def parse_xml(
     data,
     ignore_ns=False,
@@ -89,6 +139,7 @@ def parse_xml(
     Provides these extra features:
      - Handles incorrectly encoded XML
      - Allows stripping namespace information
+     - Cleans malformed XML with extra content after root closing tags
      - Wraps errors in custom exception with a snippet of the data in the message
     """
     if isinstance(data, str):
@@ -98,7 +149,22 @@ def parse_xml(
     if invalid_char_entities:
         data = re.sub(rb"&(?!(?:#(?:[0-9]+|[Xx][0-9A-Fa-f]+)|[A-Za-z0-9]+);)", b"&amp;", data)
 
-    return _parse(XML, data, name, exception, schema, *args, **kwargs)
+    # First attempt with original data
+    try:
+        return _parse(XML, data, name, exception, schema, *args, **kwargs)
+    except exception as err:
+        # If parsing failed and the error mentions "Extra content at the end of the document"
+        if "Extra content at the end of the document" in str(err):
+            try:
+                # Try to clean the XML content
+                cleaned_data = _clean_xml_content(data)
+                return _parse(XML, cleaned_data, name, exception, schema, *args, **kwargs)
+            except exception:
+                # If cleaning didn't work, raise the original error
+                raise err
+        else:
+            # For other parsing errors, raise immediately
+            raise err
 
 
 def parse_qsd(

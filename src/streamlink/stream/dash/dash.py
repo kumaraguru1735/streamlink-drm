@@ -11,7 +11,7 @@ from time import time
 from typing import Any
 
 from requests import Response
-
+import re
 from streamlink.exceptions import PluginError, StreamError
 from streamlink.session import Streamlink
 from streamlink.stream.dash.manifest import MPD, Representation, freeze_timeline
@@ -190,7 +190,6 @@ class DASHStreamReader(SegmentedStreamReader[DASHSegment, Response]):
         self.mime_type = representation.mimeType
         self.timestamp = timestamp
 
-
 class DASHStream(Stream):
     """
     Implementation of the "Dynamic Adaptive Streaming over HTTP" protocol (MPEG-DASH)
@@ -220,44 +219,52 @@ class DASHStream(Stream):
         self.audio_representation = audio_representation
         self.args = session.http.valid_request_args(**kwargs)
 
-    def __json__(self):  # noqa: PLW3201
-        json = dict(type=self.shortname())
-
-        if self.mpd.url:
-            args = self.args.copy()
-            args.update(url=self.mpd.url)
-            req = self.session.http.prepare_new_request(**args)
-            json.update(
-                # the MPD URL has already been prepared by the initial request in `parse_manifest`
-                url=self.mpd.url,
-                headers=dict(req.headers),
-            )
-
-        return json
-
-    def to_url(self):
-        if self.mpd.url is None:
-            return super().to_url()
-
-        # the MPD URL has already been prepared by the initial request in `parse_manifest`
-        return self.mpd.url
-
     @staticmethod
-    def fetch_manifest(session: Streamlink, url_or_manifest: str, **request_args) -> tuple[str, dict[str, Any]]:
-        if url_or_manifest.startswith("<?xml"):
-            return url_or_manifest, {}
+    def clean_manifest(manifest: str) -> str:
+        """
+        Clean the manifest by removing any content after the closing </MPD> tag
+        """
+        # Find the last occurrence of </MPD> (case insensitive)
+        mpd_end_pattern = r'</MPD\s*>'
+        match = None
 
-        retries = session.options.get("dash-manifest-reload-attempts")
-        args = session.http.valid_request_args(**request_args)
-        res = session.http.get(url_or_manifest, retries=retries, **args)
-        manifest: str = res.text
-        url: str = res.url
+        # Find all matches and get the last one
+        for match in re.finditer(mpd_end_pattern, manifest, re.IGNORECASE):
+            pass
 
-        return manifest, dict(url=url, base_url=url)
+        if match:
+            # Return everything up to and including the closing </MPD> tag
+            return manifest[:match.end()]
+
+        # If no </MPD> tag found, return original manifest
+        return manifest
 
     @staticmethod
     def parse_mpd(manifest: str, mpd_params: Mapping[str, Any]) -> MPD:
-        node = parse_xml(manifest, ignore_ns=True)
+        # Clean the manifest first to remove any trailing content
+        cleaned_manifest = DASHStream.clean_manifest(manifest)
+
+        try:
+            node = parse_xml(cleaned_manifest, ignore_ns=True)
+        except Exception as e:
+            # If cleaning didn't work, try more aggressive cleaning
+            # Remove everything after the last </MPD> tag including comments and scripts
+            lines = manifest.split('\n')
+            cleaned_lines = []
+            mpd_closed = False
+
+            for line in lines:
+                if not mpd_closed:
+                    cleaned_lines.append(line)
+                    if re.search(r'</MPD\s*>', line, re.IGNORECASE):
+                        mpd_closed = True
+                        break
+
+            if cleaned_lines:
+                fallback_manifest = '\n'.join(cleaned_lines)
+                node = parse_xml(fallback_manifest, ignore_ns=True)
+            else:
+                raise e
 
         return MPD(node, **mpd_params)
 
@@ -289,6 +296,7 @@ class DASHStream(Stream):
         except Exception as err:
             raise PluginError(f"Failed to parse MPD manifest: {err}") from err
 
+        # Rest of the method remains the same...
         source = mpd_params.get("url", "MPD manifest")
         video: list[Representation | None] = [None] if with_audio_only else []
         audio: list[Representation | None] = [None] if with_video_only else []
@@ -390,6 +398,42 @@ class DASHStream(Stream):
                     ret_new[f"{q}_alt{n}"] = items[n]
 
         return ret_new
+
+    # Rest of the methods remain unchanged...
+    def __json__(self):  # noqa: PLW3201
+        json = dict(type=self.shortname())
+
+        if self.mpd.url:
+            args = self.args.copy()
+            args.update(url=self.mpd.url)
+            req = self.session.http.prepare_new_request(**args)
+            json.update(
+                # the MPD URL has already been prepared by the initial request in `parse_manifest`
+                url=self.mpd.url,
+                headers=dict(req.headers),
+            )
+
+        return json
+
+    def to_url(self):
+        if self.mpd.url is None:
+            return super().to_url()
+
+        # the MPD URL has already been prepared by the initial request in `parse_manifest`
+        return self.mpd.url
+
+    @staticmethod
+    def fetch_manifest(session: Streamlink, url_or_manifest: str, **request_args) -> tuple[str, dict[str, Any]]:
+        if url_or_manifest.startswith("<?xml"):
+            return url_or_manifest, {}
+
+        retries = session.options.get("dash-manifest-reload-attempts")
+        args = session.http.valid_request_args(**request_args)
+        res = session.http.get(url_or_manifest, retries=retries, **args)
+        manifest: str = res.text
+        url: str = res.url
+
+        return manifest, dict(url=url, base_url=url)
 
     def open(self):
         video, audio = None, None
