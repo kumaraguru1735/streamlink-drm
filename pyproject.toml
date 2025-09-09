@@ -104,12 +104,12 @@ test = [
   "pytest-cov",
 ]
 lint = [
-  "ruff ==0.12.5",
+  "ruff ==0.12.11",
 ]
 typing = [
   { include-group = "test" },
   { include-group = "docs" },
-  "mypy[faster-cache] ==1.17.0",
+  "mypy[faster-cache] ==1.17.1",
   "typing-extensions >=4.0.0",
   "lxml-stubs",
   "trio-typing",
@@ -289,6 +289,8 @@ select = [
   "T20",
   # flake8-pytest-style
   "PT",
+  # flake8-use-pathlib
+  "PTH",
   # flake8-quotes
   "Q",
   # flake8-tidy-imports
